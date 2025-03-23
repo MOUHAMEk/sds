@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calcul de Commandes de Béton</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #e0eafc, #cfdef3);
+            color: #2c3e50;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #fff;
+            background: #3498db;
+            padding: 20px;
+            width: 100%;
+            text-align: center;
+            margin: 0 0 20px 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+        .selection, .element-section {
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .element-section {
+            display: none;
+        }
+        h2 {
+            color: #2980b9;
+            margin-bottom: 15px;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        button {
+            background: #2ecc71;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #27ae60;
+        }
+        .delete-btn {
+            background: #e74c3c;
+            padding: 5px 10px;
+        }
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+        .result {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #e74c3c;
+            margin-top: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tfoot td {
+            font-weight: bold;
+        }
+        #totalM3 {
+            color: red;
+        }
+        .recap-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+        footer {
+            text-align: center;
+            padding: 10px;
+            background: #3498db;
+            color: white;
+            width: 100%;
+            margin-top: 20px;
+        }
+        #modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+        .modal-content {
+            background: white;
+            margin: 50px auto;
+            padding: 20px;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 10px;
+        }
+        #commandesEnregistrees button {
+            margin: 5px;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <h1>Calcul de Commandes de Béton</h1>
+    <div class="container">
+        <div class="selection">
+            <label for="element-select">Sélectionnez un élément structural :</label>
+            <select id="element-select">
+                <option value="">-- Choisir --</option>
+                <option value="poteaux">Poteaux</option>
+                <option value="poutres">Poutres</option>
+                <option value="ascenseurs">Cages d'Ascenseur</option>
+                <option value="dalle-pleine">Dalle Pleine</option>
+                <option value="dalle-corps-creux">Dalle à Corps Creux</option>
+                <option value="semelle">Semelle</option>
+                <option value="maconnerie">Maçonnerie</option>
+                <option value="voiles">Voiles en Béton</option>
+                <option value="hourdis-poutrelles">Hourdis et Poutrelles</option>
+                <option value="escalier">Escalier</option>
+            </select>
+        </div>
+
+        <!-- Section Poteaux -->
+        <div id="poteaux" class="element-section">
+            <h2>Poteaux</h2>
+            <label for="largeurPoteau">Largeur (m) :</label>
+            <input type="number" id="largeurPoteau" placeholder="Ex: 0.3" step="0.01" min="0">
+            <label for="profondeurPoteau">Profondeur (m) :</label>
+            <input type="number" id="profondeurPoteau" placeholder="Ex: 0.3" step="0.01" min="0">
+            <label for="hauteurPoteau">Hauteur (m) :</label>
+            <input type="number" id="hauteurPoteau" placeholder="Ex: 3" step="0.01" min="0">
+            <label for="nombrePoteaux">Nombre de poteaux :</label>
+            <input type="number" id="nombrePoteaux" placeholder="Ex: 10" step="1" min="0">
+            <button onclick="calculerPoteaux()">Calculer</button>
+            <button onclick="ajouterAuTableau('Poteaux', poteauxVolume, 'm³')">Ajouter au tableau</button>
+            <p class="result" id="resultPoteaux">Volume : 0 m³</p>
+        </div>
+
+        <!-- Section Poutres -->
+        <div id="poutres" class="element-section">
+            <h2>Poutres</h2>
+            <label for="largeurPoutre">Largeur (m) :</label>
+            <input type="number" id="largeurPoutre" placeholder="Ex: 0.2" step="0.01" min="0">
+            <label for="hauteurPoutre">Hauteur (m) :</label>
+            <input type="number" id="hauteurPoutre" placeholder="Ex: 0.4" step="0.01" min="0">
+            <label for="longueurPoutre">Longueur (m) :</label>
+            <input type="number" id="longueurPoutre" placeholder="Ex: 5" step="0.01" min="0">
+            <label for="nombrePoutres">Nombre de poutres :</label>
+            <input type="number" id="nombrePoutres" placeholder="Ex: 5" step="1" min="0">
+            <button onclick="calculerPoutres()">Calculer</button>
+            <button onclick="ajouterAuTableau('Poutres', poutresVolume, 'm³')">Ajouter au tableau</button>
+            <p class="result" id="resultPoutres">Volume : 0 m³</p>
+        </div>
+
+        <!-- Section Cages d'Ascenseur -->
+        <div id="ascenseurs" class="element-section">
+            <h2>Cages d'Ascenseur</h2>
+            <label for="longueurAscenseur">Longueur extérieure (m) :</label>
+            <input type="number" id="longueurAscenseur" placeholder="Ex: 2.5" step="0.01" min="0">
+            <label for="largeurAscenseur">Largeur extérieure (m) :</label>
+            <input type="number" id="largeurAscenseur" placeholder="Ex: 2.0" step="0.01" min="0">
+            <label for="hauteurAscenseur">Hauteur (m) :</label>
+            <input type="number" id="hauteurAscenseur" placeholder="Ex: 10" step="0.01" min="0">
+            <label for="epaisseurMurAscenseur">Épaisseur des murs (m) :</label>
+            <input type="number" id="epaisseurMurAscenseur" placeholder="Ex: 0.2" step="0.01" min="0">
+            <label for="configAscenseur">Configuration :</label>
+            <select id="configAscenseur" onchange="afficherChampsPorte()">
+                <option value="quatreCotes">Quatre côtés pleins</option>
+                <option value="troisCotes">Trois côtés pleins</option>
+                <option value="quatreCotesPorte">Quatre côtés avec porte</option>
+            </select>
+            <div id="porteDiv" style="display: none;">
+                <label for="hauteurPorteAscenseur">Hauteur de la porte (m) :</label>
+                <input type="number" id="hauteurPorteAscenseur" placeholder="Ex: 2.0" step="0.01" min="0">
+                <label for="largeurPorteAscenseur">Largeur de la porte (m) :</label>
+                <input type="number" id="largeurPorteAscenseur" placeholder="Ex: 1.0" step="0.01" min="0">
+            </div>
+            <label for="nombreAscenseurs">Nombre de cages :</label>
+            <input type="number" id="nombreAscenseurs" placeholder="Ex: 1" step="1" min="0">
+            <button onclick="calculerAscenseurs()">Calculer</button>
+            <button onclick="ajouterAuTableau('Cages d\'Ascenseur', ascenseursVolume, 'm³')">Ajouter au tableau</button>
+            <p class="result" id="resultAscenseurs">Volume : 0 m³</p>
+        </div>
+
+        <!-- Section Dalle Pleine -->
+        <div id="dalle-pleine" class="element-section">
+            <h2>Dalle Pleine</h2>
+            <label for="longueurDallePleine">Longueur (m) :</label>
+            <input type="number" id="longueurDallePleine" placeholder="Ex: 10" step="0.01" min="0">
+            <label for="largeurDallePleine">Largeur (m) :</label>
+            <input type="number" id="largeurDallePleine" placeholder="Ex: 5" step="0.01" min="0">
+            <label for="epaisseurDallePleine">Épaisseur (m) :</label>
+            <input type="number" id="epaisseurDallePleine" placeholder="Ex: 0.2" step="0.01" min="0">
+            <button onclick="calculerDallePleine()">Calculer</button>
+            <button onclick="ajouterAuTableau('Dalle Pleine', dallePleineVolume, 'm³')">Ajouter au tableau</button>
+            <p class="result" id="resultDallePleine">Volume : 0 m³</p>
+        </div>
+
+        <!-- Section Dalle à Corps Creux -->
+        <div id="dalle-corps-creux" class="element-section">
+            <h2>Dalle à Corps Creux</h2>
+            <label for="typeDalleCorpsCreux">Type de dalle :</label>
+            <select id="typeDalleCorpsCreux">
+                <option value="16+4">16+4</option>
+                <option value="20+5">20+5</option>
+            </select>
+            <label for="longueurDalleCorpsCreux">Longueur (m) :</label>
+            <input type="number" id="longueurDalleCorpsCreux" placeholder="Ex: 10" step="0.01" min="0">
+            <label for="largeurDalleCorpsCreux">Largeur (m) :</label>
+            <input type="number" id="largeurDalleCorpsCreux" placeholder="Ex: 5" step="0.01" min="0">
+            <button onclick="calculerDalleCorpsCreux()">Calculer</button>
+            <button onclick="ajouterAuTableau('Dalle à Corps Creux', dalleCorpsCreuxVolume, 'm³')">Ajouter au tableau</button>
+            <p class="result" id="resultDalleCorpsCreux">Volume : 0 m³</p>
+        </div>
+
+        <!-- Section Semelle -->
+        <div id="semelle" class="element-section">
+            <h2>Semelle</h2>
+            <label for="longueurSemelle">Longueur (m) :</label>
+            <input type="number" id="longueurSemelle" placeholder="Ex: 2" step="0.01" min="0">
+            <label for="largeurSemelle">Largeur (m) :</label>
+            <input type="number" id="largeurSemelle" placeholder="Ex: 1" step="0.01" min="0">
+            <label for="hauteurSemelle">Hauteur (m) :</label>
+            <input type="number" id="hauteurSemelle" placeholder="Ex: 0.5" step="0.01" min="0">
+            <label for="nombreSemelles">Nombre de semelles :</label>
+            <input type="number" id="nombreSemelles" placeholder="Ex: 1" step="1" min="0">
+            <button onclick="calculerSemelle()">Calculer</button>
+            <button onclick="ajouterAuTableau('Semelle', semelleVolume, 'm³')">Ajouter au tableau</button>
+            <p class="result" id="resultSemelle">Volume : 0 m³</p>
+        </div>
+
+        <!-- Section Maçonnerie (modifiée) -->
+        <div id="maconnerie" class="element-section">
+            <h2>Maçonnerie</h2>
+            <label for="longueurMur">Longueur du mur (m) :</label>
+            <input type="number" id="longueurMur" placeholder="Ex: 5" step="0.01" min="0">
+            <label for="hauteurMur">Hauteur du mur (m) :</label>
+            <input type="number" id="hauteurMur" placeholder="Ex: 3" step="0.01" min="0">
+            <h3>Ouvrages (portes et fenêtres)</h3>
+            <label><input type="checkbox" id="presencePortes" onchange="togglePortes()"> Présence de portes</label>
+            <div id="portesDiv" style="display: none;">
+                <label for="nombrePortes">Nombre de portes :</label>
+                <input type="number" id="nombrePortes" placeholder="Ex: 1" step="1" min="0">
+                <label for="hauteurPorte">Hauteur d'une porte (m) :</label>
+                <input type="number" id="hauteurPorte" placeholder="Ex: 2.0" step="0.01" min="0">
+                <label for="largeurPorte">Largeur d'une porte (m) :</label>
+                <input type="number" id="largeurPorte" placeholder="Ex: 0.9" step="0.01" min="0">
+            </div>
+            <label><input type="checkbox" id="presenceFenetres" onchange="toggleFenetres()"> Présence de fenêtres</label>
+            <div id="fenetresDiv" style="display: none;">
+                <label for="nombreFenetres">Nombre de fenêtres :</label>
+                <input type="number" id="nombreFenetres" placeholder="Ex: 2" step="1" min="0">
+                <label for="hauteurFenetre">Hauteur d'une fenêtre (m) :</label>
+                <input type="number" id="hauteurFenetre" placeholder="Ex: 1.2" step="0.01" min="0">
+                <label for="largeurFenetre">Largeur d'une fenêtre (m) :</label>
+                <input type="number" id="largeurFenetre" placeholder="Ex: 1.0" step="0.01" min="0">
+            </div>
+            <button onclick="calculerMaconnerie()">Calculer</button>
+            <button onclick="ajouterAuTableau('Maçonnerie', maconnerieBriques, 'nombre')">Ajouter au tableau</button>
+            <p class="result" id="resultMaconnerie">Nombre de briques : 0</p>
+        </div>
+
+        <!-- Section Voiles en Béton -->
+        <div id="voiles" class="element-section">
+            <h2>Voiles en Béton</h2>
+            <label for="longueurVoile">Longueur (m) :</label>
+            <input type="number" id="longueurVoile" placeholder="Ex: 5" step="0.01" min="0">
+            <label for="hauteurVoile">Hauteur (m) :</label>
+            <input type="number" id="hauteurVoile" placeholder="Ex: 3" step="0.01" min="0">
+            <label for="epaisseurVoile">Épaisseur (m) :</label>
+            <input type="number" id="epaisseurVoile" placeholder="Ex: 0.2" step="0.01" min="0">
+            <button onclick="calculerVoile()">Calculer</button>
+            <button onclick="ajouterAuTableau('Voiles en Béton', voilesVolume, 'm³')">Ajouter au tableau</button>
+            <p class="result" id="resultVoile">Volume : 0 m³</p>
+        </div>
+
+        <!-- Section Hourdis et Poutrelles -->
+        <div id="hourdis-poutrelles" class="element-section">
+            <h2>Hourdis et Poutrelles</h2>
+            <label for="typeHourdis">Type d'hourdis :</label>
+            <select id="typeHourdis">
+                <option value="16+4">16+4 (16 cm x 55 cm)</option>
+                <option value="20+4">20+4 (20 cm x 50 cm)</option>
+            </select>
+            <label for="longueurPlancher">Longueur du plancher (m) :</label>
+            <input type="number" id="longueurPlancher" placeholder="Ex: 5" step="0.01" min="0">
+            <label for="largeurPlancher">Largeur du plancher (m) :</label>
+            <input type="number" id="largeurPlancher" placeholder="Ex: 4" step="0.01" min="0">
+            <label for="espacementPoutrelles">Espacement entre poutrelles (m) :</label>
+            <input type="number" id="espacementPoutrelles" placeholder="Ex: 0.6" step="0.01" min="0">
+            <button onclick="calculerHourdisPoutrelles()">Calculer</button>
+            <button onclick="ajouterHourdisPoutrelles()">Ajouter au tableau</button>
+            <p class="result" id="resultHourdis">Nombre d'hourdis : 0</p>
+            <p class="result" id="resultPoutrelles">Nombre de poutrelles : 0</p>
+        </div>
+
+        <!-- Section Escalier -->
+        <div id="escalier" class="element-section">
+            <h2>Béton pour Escalier</h2>
+            <label for="nombreMarches">Nombre de marches :</label>
+            <input type="number" id="nombreMarches" placeholder="Ex: 10" step="1" min="0">
+            <label for="hauteurMarche">Hauteur d'une marche (m) :</label>
+            <input type="number" id="hauteurMarche" placeholder="Ex: 0.18" step="0.01" min="0">
+            <label for="profondeurMarche">Profondeur d'une marche (m) :</label>
+            <input type="number" id="profondeurMarche" placeholder="Ex: 0.25" step="0.01" min="0">
+            <label for="largeurMarche">Largeur d'une marche (m) :</label>
+            <input type="number" id="largeurMarche" placeholder="Ex: 1" step="0.01" min="0">
+            <label for="inclurePalier">Inclure un palier ?</label>
+            <select id="inclurePalier" onchange="afficherPalier()">
+                <option value="non">Non</option>
+                <option value="oui">Oui</option>
+            </select>
+            <div id="palierDiv" style="display: none;">
+                <label for="longueurPalier">Longueur du palier (m) :</label>
+                <input type="number" id="longueurPalier" placeholder="Ex: 1" step="0.01" min="0">
+                <label for="largeurPalier">Largeur du palier (m) :</label>
+                <input type="number" id="largeurPalier" placeholder="Ex: 1" step="0.01" min="0">
+                <label for="epaisseurPalier">Épaisseur du palier (m) :</label>
+                <input type="number" id="epaisseurPalier" placeholder="Ex: 0.1" step="0.01" min="0">
+            </div>
+            <button onclick="calculerEscalier()">Calculer</button>
+            <button onclick="ajouterAuTableau('Escalier', escalierVolume, 'm³')">Ajouter au tableau</button>
+            <p class="result" id="resultEscalier">Volume : 0 m³</p>
+        </div>
+
+        <!-- Tableau récapitulatif -->
+        <h2>Récapitulatif</h2>
+        <table id="recapTable">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Dimensions/Infos</th>
+                    <th>Quantité</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <div class="recap-section">
+            <p id="volumeTotalText">Volume Total : <span id="totalM3">0</span> m³</p>
+            <label for="margePourcentage">Marge (%) :</label>
+            <input type="number" id="margePourcentage" placeholder="Ex: 10" step="0.01" min="0" style="width: 60px;">
+            <button onclick="appliquerMarge()">Recalculer avec Marge</button>
+            <p id="volumeFinalText">Volume Final avec Marge : <span id="totalM3Marge">0</span> m³</p>
+        </div>
+        <button onclick="telechargerPDF()">Télécharger PDF</button>
+        <button onclick="enregistrerCommande()">Enregistrer cette commande</button>
+
+        <!-- Section Commandes enregistrées -->
+        <h2>Commandes enregistrées</h2>
+        <div id="commandesEnregistrees"></div>
+
+        <!-- Modal pour afficher et modifier les détails -->
+        <div id="modal">
+            <div class="modal-content">
+                <h2>Détails de la commande</h2>
+                <div id="detailsCommande"></div>
+                <button onclick="fermerModal()">Fermer</button>
+                <button onclick="enregistrerModifications()">Enregistrer modifications</button>
+            </div>
+        </div>
+    </div>
+    <footer>
+        <p>© 2023 Calcul de Béton - Résultats à titre indicatif.</p>
+    </footer>
+
+    <script>
+        let totalM3 = 0;
+        let totalBriques = 0;
+        let totalHourdis = 0;
+        let totalPoutrelles = 0;
+        let margePourcentage = 0;
+        let totalM3Marge = 0;
+
+        // Variables pour stocker les volumes et nombres calculés
+        let poteauxVolume = 0;
+        let poutresVolume = 0;
+        let ascenseursVolume = 0;
+        let dallePleineVolume = 0;
+        let dalleCorpsCreuxVolume = 0;
+        let semelleVolume = 0;
+        let maconnerieBriques = 0;
+        let voilesVolume = 0;
+        let hourdisNombre = 0;
+        let poutrellesNombre = 0;
+        let escalierVolume = 0;
+
+        // Gestion des commandes enregistrées
+        let commandes = JSON.parse(localStorage.getItem('commandes')) || [];
+        let commandeActuelle = null;
+
+        // Afficher les sections en fonction de la sélection
+        document.getElementById('element-select').addEventListener('change', function() {
+            const sections = document.getElementsByClassName('element-section');
+            for (let section of sections) {
+                section.style.display = 'none';
+            }
+            const selectedSection = document.getElementById(this.value);
+            if (selectedSection) {
+                selectedSection.style.display = 'block';
+            }
+        });
+
+        // Fonction pour afficher les champs de la porte si nécessaire
+        function afficherChampsPorte() {
+            const config = document.getElementById('configAscenseur').value;
+            document.getElementById('porteDiv').style.display = config === 'quatreCotesPorte' ? 'block' : 'none';
+        }
+
+        // Fonction pour afficher les champs du palier si nécessaire
+        function afficherPalier() {
+            const inclure = document.getElementById('inclurePalier').value;
+            document.getElementById('palierDiv').style.display = inclure === 'oui' ? 'block' : 'none';
+        }
+
+        // Fonctions pour activer/désactiver les champs portes et fenêtres
+        function togglePortes() {
+            const presencePortes = document.getElementById('presencePortes').checked;
+            document.getElementById('portesDiv').style.display = presencePortes ? 'block' : 'none';
+        }
+
+        function toggleFenetres() {
+            const presenceFenetres = document.getElementById('presenceFenetres').checked;
+            document.getElementById('fenetresDiv').style.display = presenceFenetres ? 'block' : 'none';
+        }
+
+        // Fonction pour ajouter une ligne au tableau récapitulatif avec dimensions/infos
+        function ajouterAuTableau(element, quantite, unite) {
+            const table = document.getElementById('recapTable').getElementsByTagName('tbody')[0];
+            const newRow = table.insertRow();
+            let dimensions = '';
+
+            if (element === 'Poteaux') {
+                const largeur = parseFloat(document.getElementById('largeurPoteau').value) || 0;
+                const profondeur = parseFloat(document.getElementById('profondeurPoteau').value) || 0;
+                const hauteur = parseFloat(document.getElementById('hauteurPoteau').value) || 0;
+                const nombre = parseInt(document.getElementById('nombrePoteaux').value) || 0;
+                dimensions = `L: ${largeur} m x P: ${profondeur} m x H: ${hauteur} m, Nbr: ${nombre}`;
+            } else if (element === 'Poutres') {
+                const largeur = parseFloat(document.getElementById('largeurPoutre').value) || 0;
+                const hauteur = parseFloat(document.getElementById('hauteurPoutre').value) || 0;
+                const longueur = parseFloat(document.getElementById('longueurPoutre').value) || 0;
+                const nombre = parseInt(document.getElementById('nombrePoutres').value) || 0;
+                dimensions = `L: ${largeur} m x H: ${hauteur} m x Long: ${longueur} m, Nbr: ${nombre}`;
+            } else if (element === 'Cages d\'Ascenseur') {
+                const longueur = parseFloat(document.getElementById('longueurAscenseur').value) || 0;
+                const largeur = parseFloat(document.getElementById('largeurAscenseur').value) || 0;
+                const hauteur = parseFloat(document.getElementById('hauteurAscenseur').value) || 0;
+                const epaisseur = parseFloat(document.getElementById('epaisseurMurAscenseur').value) || 0;
+                const config = document.getElementById('configAscenseur').value === 'quatreCotes' ? '4 côtés' : 
+                              document.getElementById('configAscenseur').value === 'troisCotes' ? '3 côtés' : '4 côtés + porte';
+                const nombre = parseInt(document.getElementById('nombreAscenseurs').value) || 0;
+                dimensions = `Long: ${longueur} m x Larg: ${largeur} m x H: ${hauteur} m, Ép: ${epaisseur} m, Config: ${config}, Nbr: ${nombre}`;
+            } else if (element === 'Dalle Pleine') {
+                const longueur = parseFloat(document.getElementById('longueurDallePleine').value) || 0;
+                const largeur = parseFloat(document.getElementById('largeurDallePleine').value) || 0;
+                const epaisseur = parseFloat(document.getElementById('epaisseurDallePleine').value) || 0;
+                dimensions = `Long: ${longueur} m x Larg: ${largeur} m x Ép: ${epaisseur} m`;
+            } else if (element === 'Dalle à Corps Creux') {
+                const type = document.getElementById('typeDalleCorpsCreux').value;
+                const longueur = parseFloat(document.getElementById('longueurDalleCorpsCreux').value) || 0;
+                const largeur = parseFloat(document.getElementById('largeurDalleCorpsCreux').value) || 0;
+                dimensions = `Type: ${type}, Long: ${longueur} m x Larg: ${largeur} m`;
+            } else if (element === 'Semelle') {
+                const longueur = parseFloat(document.getElementById('longueurSemelle').value) || 0;
+                const largeur = parseFloat(document.getElementById('largeurSemelle').value) || 0;
+                const hauteur = parseFloat(document.getElementById('hauteurSemelle').value) || 0;
+                const nombre = parseInt(document.getElementById('nombreSemelles').value) || 0;
+                dimensions = `Long: ${longueur} m x Larg: ${largeur} m x H: ${hauteur} m, Nbr: ${nombre}`;
+            } else if (element === 'Maçonnerie') {
+                const longueur = parseFloat(document.getElementById('longueurMur').value) || 0;
+                const hauteur = parseFloat(document.getElementById('hauteurMur').value) || 0;
+                const presencePortes = document.getElementById('presencePortes').checked;
+                const nombrePortes = presencePortes ? parseInt(document.getElementById('nombrePortes').value) || 0 : 0;
+                const hauteurPorte = presencePortes ? parseFloat(document.getElementById('hauteurPorte').value) || 0 : 0;
+                const largeurPorte = presencePortes ? parseFloat(document.getElementById('largeurPorte').value) || 0 : 0;
+                const presenceFenetres = document.getElementById('presenceFenetres').checked;
+                const nombreFenetres = presenceFenetres ? parseInt(document.getElementById('nombreFenetres').value) || 0 : 0;
+                const hauteurFenetre = presenceFenetres ? parseFloat(document.getElementById('hauteurFenetre').value) || 0 : 0;
+                const largeurFenetre = presenceFenetres ? parseFloat(document.getElementById('largeurFenetre').value) || 0 : 0;
+                dimensions = `Long: ${longueur} m x H: ${hauteur} m`;
+                if (presencePortes) dimensions += `, Portes: ${nombrePortes} (H: ${hauteurPorte} m x L: ${largeurPorte} m)`;
+                if (presenceFenetres) dimensions += `, Fenêtres: ${nombreFenetres} (H: ${hauteurFenetre} m x L: ${largeurFenetre} m)`;
+            } else if (element === 'Voiles en Béton') {
+                const longueur = parseFloat(document.getElementById('longueurVoile').value) || 0;
+                const hauteur = parseFloat(document.getElementById('hauteurVoile').value) || 0;
+                const epaisseur = parseFloat(document.getElementById('epaisseurVoile').value) || 0;
+                dimensions = `Long: ${longueur} m x H: ${hauteur} m x Ép: ${epaisseur} m`;
+            } else if (element === 'Hourdis') {
+                const type = document.getElementById('typeHourdis').value;
+                const longueur = parseFloat(document.getElementById('longueurPlancher').value) || 0;
+                const largeur = parseFloat(document.getElementById('largeurPlancher').value) || 0;
+                const espacement = parseFloat(document.getElementById('espacementPoutrelles').value) || 0;
+                dimensions = `Type: ${type}, Long: ${longueur} m x Larg: ${largeur} m, Esp: ${espacement} m`;
+            } else if (element === 'Poutrelles') {
+                const longueur = parseFloat(document.getElementById('longueurPlancher').value) || 0;
+                const largeur = parseFloat(document.getElementById('largeurPlancher').value) || 0;
+                const espacement = parseFloat(document.getElementById('espacementPoutrelles').value) || 0;
+                dimensions = `Long: ${longueur} m x Larg: ${largeur} m, Esp: ${espacement} m`;
+            } else if (element === 'Escalier') {
+                const nombreMarches = parseInt(document.getElementById('nombreMarches').value) || 0;
+                const hauteurMarche = parseFloat(document.getElementById('hauteurMarche').value) || 0;
+                const profondeurMarche = parseFloat(document.getElementById('profondeurMarche').value) || 0;
+                const largeurMarche = parseFloat(document.getElementById('largeurMarche').value) || 0;
+                const inclurePalier = document.getElementById('inclurePalier').value;
+                dimensions = `Marches: ${nombreMarches} (H: ${hauteurMarche} m x P: ${profondeurMarche} m x L: ${largeurMarche} m)`;
+                if (inclurePalier === 'oui') {
+                    const longueurPalier = parseFloat(document.getElementById('longueurPalier').value) || 0;
+                    const largeurPalier = parseFloat(document.getElementById('largeurPalier').value) || 0;
+                    const epaisseurPalier = parseFloat(document.getElementById('epaisseurPalier').value) || 0;
+                    dimensions += `, Palier: Long: ${longueurPalier} m x Larg: ${largeurPalier} m x Ép: ${epaisseurPalier} m`;
+                }
+            }
+
+            newRow.insertCell(0).textContent = element;
+            newRow.insertCell(1).textContent = dimensions;
+            newRow.insertCell(2).textContent = unite === 'm³' ? quantite.toFixed(2) + ' m³' : quantite + ' ' + unite;
+
+            // Mettre à jour les totaux
+            if (unite === 'm³') {
+                totalM3 += parseFloat(quantite);
+                document.getElementById('totalM3').textContent = totalM3.toFixed(2);
+                appliquerMarge();
+            } else if (element === 'Maçonnerie') {
+                totalBriques += parseInt(quantite);
+            } else if (element === 'Hourdis') {
+                totalHourdis += parseInt(quantite);
+            } else if (element === 'Poutrelles') {
+                totalPoutrelles += parseInt(quantite);
+            }
+        }
+
+        // Fonction pour appliquer la marge
+        function appliquerMarge() {
+            margePourcentage = parseFloat(document.getElementById('margePourcentage').value) || 0;
+            totalM3Marge = totalM3 * (1 + margePourcentage / 100);
+            document.getElementById('totalM3Marge').textContent = totalM3Marge.toFixed(2);
+        }
+
+        // Fonction pour ajouter Hourdis et Poutrelles au tableau
+        function ajouterHourdisPoutrelles() {
+            ajouterAuTableau('Hourdis', hourdisNombre, 'nombre');
+            ajouterAuTableau('Poutrelles', poutrellesNombre, 'nombre');
+        }
+
+        // Fonction pour télécharger le PDF avec tableau centré et espace après
+        function telechargerPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const pdfWidth = doc.internal.pageSize.getWidth();
+            const pdfHeight = doc.internal.pageSize.getHeight();
+            const marginTop = 25; // Marge de 2,5 cm en haut
+            const margin = 20;
+            const lineHeight = 10;
+
+            // Ajout du titre en haut et au centre
+            const today = new Date().toLocaleDateString('fr-FR');
+            const title = `- Commande du ${today} -`;
+            doc.setFont("times", "bold");
+            doc.setFontSize(16);
+            doc.setTextColor(0, 0, 0); // Noir
+            const titleWidth = doc.getTextWidth(title);
+            doc.text(title, (pdfWidth - titleWidth) / 2, marginTop);
+
+            // Ajout du tableau récapitulatif centré
+            html2canvas(document.getElementById('recapTable')).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = (pdfWidth - 2 * margin) * 0.8; // Réduction de 20% de la largeur
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let yPos = marginTop + 10;
+                const xPos = (pdfWidth - imgWidth) / 2; // Centrer horizontalement
+
+                // Vérifier si le tableau dépasse la page
+                if (yPos + imgHeight > pdfHeight - margin) {
+                    doc.addPage();
+                    yPos = marginTop;
+                }
+                doc.addImage(imgData, 'PNG', xPos, yPos, imgWidth, imgHeight);
+                yPos += imgHeight + 15; // Espace après le tableau
+
+                // Ajout des totaux avec condition
+                doc.setFont("times", "bold");
+                doc.setFontSize(12);
+                doc.setTextColor(255, 0, 0); // Rouge
+
+                if (totalM3 > 0) {
+                    const text1 = `Volume Total : ${totalM3.toFixed(2)} m³`;
+                    if (yPos + lineHeight > pdfHeight - margin) {
+                        doc.addPage();
+                        yPos = marginTop;
+                    }
+                    doc.text(text1, (pdfWidth - doc.getTextWidth(text1)) / 2, yPos);
+                    yPos += lineHeight;
+
+                    const text2 = `Volume Final avec Marge (${margePourcentage}%) : ${totalM3Marge.toFixed(2)} m³`;
+                    if (yPos + lineHeight > pdfHeight - margin) {
+                        doc.addPage();
+                        yPos = marginTop;
+                    }
+                    doc.text(text2, (pdfWidth - doc.getTextWidth(text2)) / 2, yPos);
+                    yPos += lineHeight;
+                }
+                if (totalBriques > 0) {
+                    const textBriques = `Total Briques : ${totalBriques}`;
+                    if (yPos + lineHeight > pdfHeight - margin) {
+                        doc.addPage();
+                        yPos = marginTop;
+                    }
+                    doc.text(textBriques, (pdfWidth - doc.getTextWidth(textBriques)) / 2, yPos);
+                    yPos += lineHeight;
+                }
+                if (totalHourdis > 0) {
+                    const text3 = `Total Hourdis : ${totalHourdis}`;
+                    if (yPos + lineHeight > pdfHeight - margin) {
+                        doc.addPage();
+                        yPos = marginTop;
+                    }
+                    doc.text(text3, (pdfWidth - doc.getTextWidth(text3)) / 2, yPos);
+                    yPos += lineHeight;
+                }
+                if (totalPoutrelles > 0) {
+                    const text4 = `Total Poutrelles : ${totalPoutrelles}`;
+                    if (yPos + lineHeight > pdfHeight - margin) {
+                        doc.addPage();
+                        yPos = marginTop;
+                    }
+                    doc.text(text4, (pdfWidth - doc.getTextWidth(text4)) / 2, yPos);
+                }
+
+                doc.save('commandes_beton.pdf');
+            });
+        }
+
+        // Fonction pour enregistrer la commande actuelle
+        function enregistrerCommande() {
+            const table = document.getElementById('recapTable').getElementsByTagName('tbody')[0];
+            const rows = table.rows;
+            const commande = {
+                id: Date.now(),
+                elements: [],
+                totalM3: totalM3,
+                totalBriques: totalBriques,
+                totalHourdis: totalHourdis,
+                totalPoutrelles: totalPoutrelles,
+                margePourcentage: margePourcentage,
+                totalM3Marge: totalM3Marge
+            };
+            for (let row of rows) {
+                commande.elements.push({
+                    type: row.cells[0].textContent,
+                    dimensions: row.cells[1].textContent,
+                    quantite: row.cells[2].textContent
+                });
+            }
+            commandes.push(commande);
+            localStorage.setItem('commandes', JSON.stringify(commandes));
+            afficherCommandesEnregistrees();
+            alert('Commande enregistrée avec succès !');
+        }
+
+        // Fonction pour afficher les commandes enregistrées
+        function afficherCommandesEnregistrees() {
+            const div = document.getElementById('commandesEnregistrees');
+            div.innerHTML = '';
+            commandes.forEach((commande, index) => {
+                const btn = document.createElement('button');
+                btn.textContent = `Commande ${index + 1} - ${commande.id}`;
+                btn.onclick = () => afficherDetailsCommande(commande.id);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Supprimer';
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.onclick = () => supprimerCommande(commande.id);
+
+                div.appendChild(btn);
+                div.appendChild(deleteBtn);
+            });
+        }
+
+        // Fonction pour supprimer une commande
+        function supprimerCommande(id) {
+            if (confirm('Voulez-vous vraiment supprimer cette commande ?')) {
+                commandes = commandes.filter(c => c.id !== id);
+                localStorage.setItem('commandes', JSON.stringify(commandes));
+                afficherCommandesEnregistrees();
+            }
+        }
+
+        // Fonction pour afficher les détails d'une commande
+        function afficherDetailsCommande(id) {
+            const commande = commandes.find(c => c.id === id);
+            if (!commande) return;
+            commandeActuelle = commande;
+            const detailsDiv = document.getElementById('detailsCommande');
+            detailsDiv.innerHTML = '';
+
+            commande.elements.forEach((el, index) => {
+                const p = document.createElement('p');
+                const quantiteValue = parseFloat(el.quantite.split(' ')[0]);
+                p.innerHTML = `${el.type} (${el.dimensions}) : <input type="number" id="quantite-${index}" value="${quantiteValue}" step="0.01" min="0"> ${el.quantite.split(' ')[1]}`;
+                detailsDiv.appendChild(p);
+            });
+
+            detailsDiv.innerHTML += `<p>Volume Total : ${commande.totalM3.toFixed(2)} m³</p>`;
+            detailsDiv.innerHTML += `<p>Total Briques : ${commande.totalBriques}</p>`;
+            detailsDiv.innerHTML += `<p>Total Hourdis : ${commande.totalHourdis}</p>`;
+            detailsDiv.innerHTML += `<p>Total Poutrelles : ${commande.totalPoutrelles}</p>`;
+            detailsDiv.innerHTML += `<p>Marge (%) : <input type="number" id="margeModif" value="${commande.margePourcentage}" step="0.01" min="0"></p>`;
+            detailsDiv.innerHTML += `<p>Volume Final avec Marge : ${commande.totalM3Marge.toFixed(2)} m³</p>`;
+
+            document.getElementById('modal').style.display = 'block';
+        }
+
+        // Fonction pour fermer le modal
+        function fermerModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        // Fonction pour enregistrer les modifications
+        function enregistrerModifications() {
+            if (!commandeActuelle) return;
+
+            commandeActuelle.elements.forEach((el, index) => {
+                const input = document.getElementById(`quantite-${index}`);
+                const quantiteValue = parseFloat(input.value).toFixed(2);
+                el.quantite = `${quantiteValue} ${el.quantite.split(' ')[1]}`;
+            });
+
+            commandeActuelle.margePourcentage = parseFloat(document.getElementById('margeModif').value) || 0;
+            commandeActuelle.totalM3 = commandeActuelle.elements
+                .filter(el => el.quantite.includes('m³'))
+                .reduce((sum, el) => sum + parseFloat(el.quantite.split(' ')[0]), 0);
+            commandeActuelle.totalBriques = commandeActuelle.elements
+                .filter(el => el.type === 'Maçonnerie')
+                .reduce((sum, el) => sum + parseInt(el.quantite.split(' ')[0]), 0) || 0;
+            commandeActuelle.totalHourdis = commandeActuelle.elements
+                .filter(el => el.type === 'Hourdis')
+                .reduce((sum, el) => sum + parseInt(el.quantite.split(' ')[0]), 0) || 0;
+            commandeActuelle.totalPoutrelles = commandeActuelle.elements
+                .filter(el => el.type === 'Poutrelles')
+                .reduce((sum, el) => sum + parseInt(el.quantite.split(' ')[0]), 0) || 0;
+            commandeActuelle.totalM3Marge = commandeActuelle.totalM3 * (1 + commandeActuelle.margePourcentage / 100);
+
+            localStorage.setItem('commandes', JSON.stringify(commandes));
+            fermerModal();
+            afficherCommandesEnregistrees();
+            alert('Modifications enregistrées avec succès !');
+        }
+
+        // Charger les commandes enregistrées au démarrage
+        afficherCommandesEnregistrees();
+
+        // Fonctions de calcul
+        function calculerPoteaux() {
+            const largeur = parseFloat(document.getElementById('largeurPoteau').value) || 0;
+            const profondeur = parseFloat(document.getElementById('profondeurPoteau').value) || 0;
+            const hauteur = parseFloat(document.getElementById('hauteurPoteau').value) || 0;
+            const nombre = parseInt(document.getElementById('nombrePoteaux').value) || 0;
+            poteauxVolume = largeur * profondeur * hauteur * nombre;
+            document.getElementById('resultPoteaux').textContent = `Volume : ${poteauxVolume.toFixed(2)} m³`;
+        }
+
+        function calculerPoutres() {
+            const largeur = parseFloat(document.getElementById('largeurPoutre').value) || 0;
+            const hauteur = parseFloat(document.getElementById('hauteurPoutre').value) || 0;
+            const longueur = parseFloat(document.getElementById('longueurPoutre').value) || 0;
+            const nombre = parseInt(document.getElementById('nombrePoutres').value) || 0;
+            poutresVolume = largeur * hauteur * longueur * nombre;
+            document.getElementById('resultPoutres').textContent = `Volume : ${poutresVolume.toFixed(2)} m³`;
+        }
+
+        function calculerAscenseurs() {
+            const longueur = parseFloat(document.getElementById('longueurAscenseur').value) || 0;
+            const largeur = parseFloat(document.getElementById('largeurAscenseur').value) || 0;
+            const hauteur = parseFloat(document.getElementById('hauteurAscenseur').value) || 0;
+            const epaisseur = parseFloat(document.getElementById('epaisseurMurAscenseur').value) || 0;
+            const config = document.getElementById('configAscenseur').value;
+            const nombre = parseInt(document.getElementById('nombreAscenseurs').value) || 0;
+
+            let volumeMurs = 0;
+
+            if (config === 'quatreCotes') {
+                volumeMurs = 2 * (longueur + largeur) * hauteur * epaisseur;
+            } else if (config === 'troisCotes') {
+                volumeMurs = (longueur + largeur + Math.max(longueur, largeur)) * hauteur * epaisseur;
+            } else if (config === 'quatreCotesPorte') {
+                volumeMurs = 2 * (longueur + largeur) * hauteur * epaisseur;
+                const hauteurPorte = parseFloat(document.getElementById('hauteurPorteAscenseur').value) || 0;
+                const largeurPorte = parseFloat(document.getElementById('largeurPorteAscenseur').value) || 0;
+                const volumePorte = hauteurPorte * largeurPorte * epaisseur;
+                volumeMurs -= volumePorte;
+            }
+
+            ascenseursVolume = volumeMurs * nombre;
+            document.getElementById('resultAscenseurs').textContent = `Volume : ${ascenseursVolume.toFixed(2)} m³`;
+        }
+
+        function calculerDallePleine() {
+            const longueur = parseFloat(document.getElementById('longueurDallePleine').value) || 0;
+            const largeur = parseFloat(document.getElementById('largeurDallePleine').value) || 0;
+            const epaisseur = parseFloat(document.getElementById('epaisseurDallePleine').value) || 0;
+            dallePleineVolume = longueur * largeur * epaisseur;
+            document.getElementById('resultDallePleine').textContent = `Volume : ${dallePleineVolume.toFixed(2)} m³`;
+        }
+
+        function calculerDalleCorpsCreux() {
+            const longueur = parseFloat(document.getElementById('longueurDalleCorpsCreux').value) || 0;
+            const largeur = parseFloat(document.getElementById('largeurDalleCorpsCreux').value) || 0;
+            const type = document.getElementById('typeDalleCorpsCreux').value;
+            const epaisseur = type === '16+4' ? 0.20 : 0.25;
+            dalleCorpsCreuxVolume = longueur * largeur * epaisseur;
+            document.getElementById('resultDalleCorpsCreux').textContent = `Volume : ${dalleCorpsCreuxVolume.toFixed(2)} m³`;
+        }
+
+        function calculerSemelle() {
+            const longueur = parseFloat(document.getElementById('longueurSemelle').value) || 0;
+            const largeur = parseFloat(document.getElementById('largeurSemelle').value) || 0;
+            const hauteur = parseFloat(document.getElementById('hauteurSemelle').value) || 0;
+            const nombre = parseInt(document.getElementById('nombreSemelles').value) || 0;
+            semelleVolume = longueur * largeur * hauteur * nombre;
+            document.getElementById('resultSemelle').textContent = `Volume : ${semelleVolume.toFixed(2)} m³`;
+        }
+
+        function calculerMaconnerie() {
+            const longueur = parseFloat(document.getElementById('longueurMur').value) || 0;
+            const hauteur = parseFloat(document.getElementById('hauteurMur').value) || 0;
+            const presencePortes = document.getElementById('presencePortes').checked;
+            const nombrePortes = presencePortes ? parseInt(document.getElementById('nombrePortes').value) || 0 : 0;
+            const hauteurPorte = presencePortes ? parseFloat(document.getElementById('hauteurPorte').value) || 0 : 0;
+            const largeurPorte = presencePortes ? parseFloat(document.getElementById('largeurPorte').value) || 0 : 0;
+            const presenceFenetres = document.getElementById('presenceFenetres').checked;
+            const nombreFenetres = presenceFenetres ? parseInt(document.getElementById('nombreFenetres').value) || 0 : 0;
+            const hauteurFenetre = presenceFenetres ? parseFloat(document.getElementById('hauteurFenetre').value) || 0 : 0;
+            const largeurFenetre = presenceFenetres ? parseFloat(document.getElementById('largeurFenetre').value) || 0 : 0;
+
+            // Surface totale du mur
+            const surfaceMur = longueur * hauteur;
+
+            // Surface des ouvertures (portes et fenêtres)
+            const surfacePortes = nombrePortes * hauteurPorte * largeurPorte;
+            const surfaceFenetres = nombreFenetres * hauteurFenetre * largeurFenetre;
+            const surfaceOuvertures = surfacePortes + surfaceFenetres;
+
+            // Surface nette à maçonner
+            const surfaceNette = surfaceMur - surfaceOuvertures;
+
+            // Calcul exact du nombre de briques : 1 brique = 0.2 m x 0.5 m = 0.1 m², donc 10 briques par m² (au lieu de 12,5 approximatif)
+            const briquesParM2 = 1 / (0.2 * 0.5); // 10 briques par m²
+            maconnerieBriques = Math.ceil(surfaceNette * briquesParM2);
+
+            document.getElementById('resultMaconnerie').textContent = `Nombre de briques : ${maconnerieBriques}`;
+        }
+
+        function calculerVoile() {
+            const longueur = parseFloat(document.getElementById('longueurVoile').value) || 0;
+            const hauteur = parseFloat(document.getElementById('hauteurVoile').value) || 0;
+            const epaisseur = parseFloat(document.getElementById('epaisseurVoile').value) || 0;
+            voilesVolume = longueur * hauteur * epaisseur;
+            document.getElementById('resultVoile').textContent = `Volume : ${voilesVolume.toFixed(2)} m³`;
+        }
+
+        function calculerHourdisPoutrelles() {
+            const longueur = parseFloat(document.getElementById('longueurPlancher').value) || 0;
+            const largeur = parseFloat(document.getElementById('largeurPlancher').value) || 0;
+            const espacement = parseFloat(document.getElementById('espacementPoutrelles').value) || 0.6;
+            const type = document.getElementById('typeHourdis').value;
+            const largeurHourdis = type === '16+4' ? 0.55 : 0.50;
+            hourdisNombre = Math.ceil((longueur * largeur) / (largeurHourdis * espacement));
+            poutrellesNombre = Math.ceil(largeur / espacement) * Math.ceil(longueur / 6);
+            document.getElementById('resultHourdis').textContent = `Nombre d'hourdis : ${hourdisNombre}`;
+            document.getElementById('resultPoutrelles').textContent = `Nombre de poutrelles : ${poutrellesNombre}`;
+        }
+
+        function calculerEscalier() {
+            const nombreMarches = parseInt(document.getElementById('nombreMarches').value) || 0;
+            const hauteurMarche = parseFloat(document.getElementById('hauteurMarche').value) || 0;
+            const profondeurMarche = parseFloat(document.getElementById('profondeurMarche').value) || 0;
+            const largeurMarche = parseFloat(document.getElementById('largeurMarche').value) || 0;
+            let volumeMarches = nombreMarches * hauteurMarche * profondeurMarche * largeurMarche * 0.5;
+            if (document.getElementById('inclurePalier').value === 'oui') {
+                const longueurPalier = parseFloat(document.getElementById('longueurPalier').value) || 0;
+                const largeurPalier = parseFloat(document.getElementById('largeurPalier').value) || 0;
+                const epaisseurPalier = parseFloat(document.getElementById('epaisseurPalier').value) || 0;
+                volumeMarches += longueurPalier * largeurPalier * epaisseurPalier;
+            }
+            escalierVolume = volumeMarches;
+            document.getElementById('resultEscalier').textContent = `Volume : ${escalierVolume.toFixed(2)} m³`;
+        }
+    </script>
+</body>
+</html>
